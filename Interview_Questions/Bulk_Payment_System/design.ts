@@ -54,8 +54,8 @@ interface PaymentRecord {
 }
 
 interface PaymentResult {
-  status: string;
-  error: string | null;
+  status: PaymentStatus;
+  id: string
 }
 
 interface PaymentResponse {
@@ -71,6 +71,7 @@ interface BulkPaymentResponse {
 
 class BulkPaymentOrchstrator {
 
+  limit = 20;
 
   constructor(private bulkReqRepo: BulkPaymentRepository,
     private paymentRepo: PaymentRepository,
@@ -78,8 +79,6 @@ class BulkPaymentOrchstrator {
   ) {}
 
   processPayment(data: BulkPaymentRequest) {
-
-    const {}
     // validate the request
     try {
         const {result, err} = this.validateRequest(data);
@@ -104,8 +103,6 @@ class BulkPaymentOrchstrator {
         
         const payments = await this.processPaymentsBulk(data);
 
-
-
         const complted = payments.every(payment => payment.status === PaymentStatus.COMPLETED);
         const failed = payments.every(payment => payment.status === PaymentStatus.FAILED)
 
@@ -129,36 +126,52 @@ class BulkPaymentOrchstrator {
   async processPaymentsBulk(data: BulkPaymentRequest): PaymentResult[] {
 
     const payloadLength = data.payments.length;
+    const payments = data.payments;
     const paymentRequests = [];
+    const results = [];
     // Create payment records and process in parallel
     for (let i=0; i<payloadLength; i++) {
         const paymentRecord = {
-          id: crypto.randomUUID(),
-          beneficiaryId: data.beneficiaryId,
-          amount: data.amount,
-          currency: data.currency,
-          status: PaymentStatus.PENDING
+          id: payments[i].id,
+          beneficiaryId: data.payments[i].beneficiaryId,
+          amount: payments[i].amount,
+          currency: payments[i].currency,
+          status: PaymentStatus.PENDING,
+          bulkPaymentId: data.bulkPaymentId
         }
 
         const insertStatus = this.paymentRepo.createIfNotExist(paymentRecord);
 
         if (!insertStatus) {
           console.log("Duplicate payment :", paymentRecord);
+          continue;
         }
 
         const request: PaymentRequest = {
           ...paymentRecord
         }
 
-        paymentRequests.push(this.paymentProvider.sendPayment(request));
+        paymentRequests.push(request);
     }
 
-    const results = await Promise.allSettled(paymentRequests)
+    //const results = await Promise.allSettled(paymentRequests)
+    for (let k=0; k<payloadLength ; k+=this.limit) {
+      const res = await Promise.allSettled(paymentRequests.slice(k, k+this.limit).map((p) => this.paymentProvider.sendPayment(p)));
+      results.push(...res)
+    }
+
     return results;
   }
 
 }
 
 class PaymentProvider {
-  async sendPayment(payment: PaymentRequest): Promise<PaymentResult> {}
+  async sendPayment(payment: PaymentRequest): Promise<PaymentResult> {
+    const paymentResult: PaymentResult = {
+      id: payment.id,
+      status: Math.floor(Math.random()*100)%2 === 0 ? PaymentStatus.FAILED : PaymentStatus.COMPLETED
+    }
+
+    return Promise.resolve(paymentResult);
+  }
 }
