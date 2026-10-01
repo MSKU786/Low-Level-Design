@@ -72,7 +72,10 @@ interface BulkPaymentResponse {
 class BulkPaymentOrchstrator {
 
 
-  constructor(private bulkReqRepo: BulkPaymentRepository) {}
+  constructor(private bulkReqRepo: BulkPaymentRepository,
+    private paymentRepo: PaymentRepository,
+    private paymentProvider: PaymentProvider
+  ) {}
 
   processPayment(data: BulkPaymentRequest) {
 
@@ -99,7 +102,20 @@ class BulkPaymentOrchstrator {
         }
 
         
-        return record;
+        const payments = await this.processPaymentsBulk(data);
+
+
+
+        const complted = payments.every(payment => payment.status === PaymentStatus.COMPLETED);
+        const failed = payments.every(payment => payment.status === PaymentStatus.FAILED)
+
+        const bulkResponse = {
+          id: data.bulkPaymentId,
+          payments,
+          status: complted ? BulkPaymentStatus.COMPLETED : failed ? BulkPaymentStatus.FAILED : BulkPaymentStatus.PARTIALLY_COMPLETED
+        }
+
+        return bulkResponse;
     }
 
     // store in db
@@ -108,8 +124,41 @@ class BulkPaymentOrchstrator {
     //  paralley process them
     //
   }
+
+
+  async processPaymentsBulk(data: BulkPaymentRequest): PaymentResult[] {
+
+    const payloadLength = data.payments.length;
+    const paymentRequests = [];
+    // Create payment records and process in parallel
+    for (let i=0; i<payloadLength; i++) {
+        const paymentRecord = {
+          id: crypto.randomUUID(),
+          beneficiaryId: data.beneficiaryId,
+          amount: data.amount,
+          currency: data.currency,
+          status: PaymentStatus.PENDING
+        }
+
+        const insertStatus = this.paymentRepo.createIfNotExist(paymentRecord);
+
+        if (!insertStatus) {
+          console.log("Duplicate payment :", paymentRecord);
+        }
+
+        const request: PaymentRequest = {
+          ...paymentRecord
+        }
+
+        paymentRequests.push(this.paymentProvider.sendPayment(request));
+    }
+
+    const results = await Promise.allSettled(paymentRequests)
+    return results;
+  }
+
 }
 
 class PaymentProvider {
-  async sendPayment(payment: Payment): Promise<PaymentResult> {}
+  async sendPayment(payment: PaymentRequest): Promise<PaymentResult> {}
 }
