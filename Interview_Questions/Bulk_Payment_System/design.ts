@@ -7,7 +7,7 @@ interface BulkPaymentRepository {
 interface PaymentRepository {
   createIfNotExist(record: PaymentRecord): Promise<boolean>;
   findById(id: string): Promise<PaymentRecord | null>;
-  updateStatus(bulkPaymentId: string, status: PaymentStatus): Promise<void>;
+  updateStatus(paymentId: string, status: PaymentStatus): Promise<void>;
 }
 
 enum BulkPaymentStatus {
@@ -156,7 +156,16 @@ class BulkPaymentOrchstrator {
 
     //const results = await Promise.allSettled(paymentRequests)
     for (let k=0; k<payloadLength ; k+=this.limit) {
-      const res = await Promise.allSettled(paymentRequests.slice(k, k+this.limit).map((p) => this.paymentProvider.sendPayment(p)));
+      const paymentsSlice = paymentRequests.slice(k, k+this.limit);
+
+      for (let i=0; i<this.limit; i++) {
+        this.paymentRepo.updateStatus(paymentsSlice[i].id, PaymentStatus.PROCESSING);
+        paymentsSlice[i].status = PaymentStatus.PROCESSING;
+      }
+
+      const res = await Promise.allSettled(paymentsSlice.map((p) => this.paymentProvider.sendPayment(p)));+
+      res.map((r) => this.paymentRepo.updateStatus(r.id, r.status))
+
       results.push(...res)
     }
 
