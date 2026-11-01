@@ -29,7 +29,7 @@ class Square implements Shape {
   constructor(private side: number) {}
 
   getArea(): number {
-    return this.side * 2;
+    return this.side * this.side;
   }
 
   setSide(s: number): void {
