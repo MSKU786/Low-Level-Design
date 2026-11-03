@@ -4,6 +4,24 @@ The foundation week. Each principle gets one day: first spot the violation, then
 refactor to the clean version. Day 6 combines all five into a design-from-scratch
 challenge, and Day 7 is self-assessment.
 
+## Running it
+
+```bash
+npm install          # one-time: installs tsx + typescript + @types/node
+npm start            # run the Day 6 reference program (Food Delivery System)
+npm run typecheck    # strict type-check (tsc --noEmit)
+npm run dev -- Day6/Food_Delivery_System.ts   # run any file: npm run dev -- <path>
+```
+
+- **Strict mode is on** (`tsconfig.json`), so the compiler itself flags many
+  SOLID smells for you.
+- `moduleDetection: "force"` isolates each file, so the same top-level names
+  (`Order`, `OrderStatus`, …) reused across days don't collide.
+- `npm run typecheck` currently covers **Day 6** — the one complete, runnable
+  program. Days 1–5 `*_applied.ts` are teaching fragments (see the note below)
+  and are brought under the type-check in a later enhancement; you can still run
+  any file with `npm run dev -- <path>`.
+
 ## Daily Breakdown
 
 | Day | Principle | Core Idea | Notes |
