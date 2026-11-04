@@ -1,0 +1,16 @@
+{
+  "name": "solid-week1",
+  "version": "1.0.0",
+  "description": "Week 1 of the LLD learning path — the SOLID principles, runnable.",
+  "private": true,
+  "scripts": {
+    "start": "tsx Day6/Food_Delivery_System.ts",
+    "dev": "tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
