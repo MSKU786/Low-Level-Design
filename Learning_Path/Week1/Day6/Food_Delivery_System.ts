@@ -40,10 +40,10 @@ interface PricingBreakdown {
 // =============================================
 
 const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  [OrderStatus.PLACED]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
-  [OrderStatus.CONFIRMED]: [OrderStatus.PREPARING, OrderStatus.CANCELLED],
-  [OrderStatus.PREPARING]: [OrderStatus.OUT_FOR_DELIVERY],
-  [OrderStatus.OUT_FOR_DELIVERY]: [OrderStatus.DELIVERED],
+  [OrderStatus.PLACED]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED, OrderStatus.FAILED],
+  [OrderStatus.CONFIRMED]: [OrderStatus.PREPARING, OrderStatus.CANCELLED, OrderStatus.FAILED],
+  [OrderStatus.PREPARING]: [OrderStatus.OUT_FOR_DELIVERY, OrderStatus.FAILED],
+  [OrderStatus.OUT_FOR_DELIVERY]: [OrderStatus.DELIVERED, OrderStatus.FAILED],
   [OrderStatus.DELIVERED]: [],
   [OrderStatus.CANCELLED]: [],
   [OrderStatus.FAILED]: [],
@@ -86,7 +86,10 @@ class Order {
   }
 
   markFailed() {
-    this.status = OrderStatus.FAILED;
+    // Route through the state machine: a DELIVERED or CANCELLED order is
+    // terminal and cannot be failed. Previously this set the status directly,
+    // bypassing the guard and allowing FAILED from any state.
+    this.transitionTo(OrderStatus.FAILED);
   }
 }
 
@@ -306,7 +309,9 @@ class OrderService {
       const paymentResult = await this.paymentProcessor.processPayment(total, payment);
 
       if (paymentResult.status !== "SUCCESS") {
-        order.markFailed();
+        // The catch block below owns the FAILED transition — throwing here is
+        // enough. Marking failed in both places would try FAILED -> FAILED and
+        // throw from the guarded state machine.
         throw new Error("Payment failed");
       }
 
