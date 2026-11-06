@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+
 // =============================================
 // TYPES & ENUMS
 // =============================================
@@ -83,6 +85,18 @@ class Order {
 
   markPreparing() {
     this.transitionTo(OrderStatus.PREPARING);
+  }
+
+  markOutForDelivery() {
+    this.transitionTo(OrderStatus.OUT_FOR_DELIVERY);
+  }
+
+  markDelivered() {
+    this.transitionTo(OrderStatus.DELIVERED);
+  }
+
+  markCancelled() {
+    this.transitionTo(OrderStatus.CANCELLED);
   }
 
   markFailed() {
@@ -337,10 +351,30 @@ class OrderService {
 }
 
 // =============================================
-// USAGE EXAMPLE
+// EXPORTS (for tests / reuse)
 // =============================================
 
-(async () => {
+export {
+  OrderStatus,
+  Order,
+  Restaurant,
+  OrderService,
+  DefaultValidator,
+  DefaultPricing,
+  DefaultPaymentProcessor,
+  InMemoryOrderRepo,
+  ConsoleNotifier,
+  StandardDelivery,
+  NoDiscount,
+  UPIPayment,
+};
+export type { OrderItem, MenuItem, Customer };
+
+// =============================================
+// USAGE EXAMPLE (runs only when executed directly, not when imported)
+// =============================================
+
+async function demo() {
   const service = new OrderService(
     new DefaultValidator(),
     new DefaultPricing(),
@@ -365,4 +399,8 @@ class OrderService {
   });
 
   console.log("Order Created:", order.getStatus());
-})();
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  void demo();
+}
