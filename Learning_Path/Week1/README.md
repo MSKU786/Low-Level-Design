@@ -7,11 +7,16 @@ challenge, and Day 7 is self-assessment.
 ## Running it
 
 ```bash
-npm install          # one-time: installs tsx + typescript + @types/node
+npm install          # one-time: installs tsx + typescript + @types/node + vitest
 npm start            # run the Day 6 reference program (Food Delivery System)
+npm test             # run the test suite (vitest)
 npm run typecheck    # strict type-check (tsc --noEmit)
 npm run dev -- Day6/Food_Delivery_System.ts   # run any file: npm run dev -- <path>
 ```
+
+Tests live next to the code as `*.test.ts` and encode the principle itself — each
+suite fails on the violation and passes on the fix (e.g. Day 6 proves the order
+state machine rejects failing a `DELIVERED` order).
 
 - **Strict mode is on** (`tsconfig.json`), so the compiler itself flags many
   SOLID smells for you.
