@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    // --- Language / module target ---
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "types": ["node"],
+
+    // Each day's files are standalone scripts that reuse the same top-level
+    // names. "force" makes TypeScript treat every file as its own module, so
+    // those names don't collide across files.
+    "moduleDetection": "force",
+
+    // --- Strictness: the compiler is itself an OOP teacher ---
+    "strict": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // --- No build output; we run via tsx and type-check with --noEmit ---
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+
+  // Phase 1 keeps the green type-check scoped to the one complete, runnable
+  // program (the Day 6 Library Management System capstone). Days 1–4 violation/
+  // fixed files are teaching fragments that reference undefined ambient deps;
+  // a later phase turns them into runnable demos and widens this include.
+  "include": ["Day6/**/*.ts"]
+}
