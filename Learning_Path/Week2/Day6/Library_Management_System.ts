@@ -3,6 +3,8 @@ Design and implement a library management system applying SOLID and OOP principl
 This file is cleaned and formatted for readability.
 */
 
+import { fileURLToPath } from 'node:url';
+
 enum LoanStatus {
   Active = 'Active',
   Returned = 'Returned',
@@ -448,6 +450,29 @@ class ConsoleNotifier implements Notifier {
   }
 }
 
+// --- Exports (for tests / reuse) ---
+export {
+  LoanStatus,
+  InMemoryRepository,
+  ReservationQueue,
+  LibraryItem,
+  Book,
+  DVD,
+  Member,
+  Loan,
+  StudentPolicy,
+  TeacherPolicy,
+  PublicPolicy,
+  BookFine,
+  DVDFine,
+  FineRegistry,
+  SearchService,
+  BorrowService,
+  ReturnService,
+  ConsoleNotifier,
+};
+export type { Repository, Notifier, Reservation, BorrowingPolicy, Entity, HasId };
+
 // --- Demo runner ---
 function id(prefix: string) {
   return `${prefix}_${Math.floor(Math.random() * 10000)}`;
@@ -512,4 +537,7 @@ async function demo() {
   console.log('Return processed. Fine:', res.fine);
 }
 
-demo().catch((err) => console.error('Demo error:', err));
+// Run the demo only when executed directly, not when imported by tests.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  demo().catch((err) => console.error('Demo error:', err));
+}
